@@ -42,6 +42,13 @@ const DOM = {
   customQualitySlider: document.getElementById('customQualitySlider'),
   customQualityVal: document.getElementById('customQualityVal'),
   maxDimensionSelect: document.getElementById('maxDimensionSelect'),
+  // Target Size Limit
+  targetSizeBar: document.getElementById('targetSizeBar'),
+  targetSizeToggle: document.getElementById('targetSizeToggle'),
+  targetSizeControls: document.getElementById('targetSizeControls'),
+  targetSizeInput: document.getElementById('targetSizeInput'),
+  targetPresetChips: document.getElementById('targetPresetChips'),
+
   docTitleInput: document.getElementById('docTitleInput'),
   docAuthorInput: document.getElementById('docAuthorInput'),
   addPageNumbersCheckbox: document.getElementById('addPageNumbersCheckbox'),
@@ -408,7 +415,14 @@ function updateUIState() {
     // Estimate size
     const totalBytes = STATE.items.reduce((acc, it) => acc + it.size, 0);
     const estMb = (totalBytes / (1024 * 1024)).toFixed(1);
-    DOM.actionDocMeta.textContent = `${count} ${count === 1 ? 'page' : 'pages'} • Source ~${estMb} MB`;
+
+    const targetMaxBytes = getTargetMaxBytes();
+    if (targetMaxBytes) {
+      const targetMb = (targetMaxBytes / (1024 * 1024)).toFixed(1);
+      DOM.actionDocMeta.textContent = `${count} ${count === 1 ? 'page' : 'pages'} • Source ~${estMb} MB → Target: ≤ ${targetMb} MB`;
+    } else {
+      DOM.actionDocMeta.textContent = `${count} ${count === 1 ? 'page' : 'pages'} • Source ~${estMb} MB`;
+    }
   }
 }
 
@@ -617,13 +631,65 @@ function loadScript(src) {
 }
 
 // ============================================================================
-// PDF Generation Engine (using pdf-lib)
+// PDF Generation Engine with Adaptive Target File Size Optimizer
 // ============================================================================
 
+function getTargetMaxBytes() {
+  if (!DOM.targetSizeToggle || !DOM.targetSizeToggle.checked) {
+    return null; // Disabled / No limit
+  }
+  const mbVal = parseFloat(DOM.targetSizeInput.value);
+  if (isNaN(mbVal) || mbVal <= 0) {
+    return null;
+  }
+  return Math.round(mbVal * 1024 * 1024);
+}
+
+function getInitialCompressionParams(totalPages, targetMaxBytes) {
+  const preset = DOM.compressionSelect.value;
+
+  // If no target limit, use direct preset
+  if (!targetMaxBytes || targetMaxBytes <= 0) {
+    if (preset === 'lossless') return { quality: 1.0, maxDim: 0, isLossless: true };
+    if (preset === 'high') return { quality: 0.85, maxDim: 0, isLossless: false };
+    if (preset === 'balanced') return { quality: 0.72, maxDim: 2560, isLossless: false };
+    if (preset === 'compact') return { quality: 0.55, maxDim: 1800, isLossless: false };
+    if (preset === 'custom') {
+      return {
+        quality: parseInt(DOM.customQualitySlider.value, 10) / 100,
+        maxDim: parseInt(DOM.maxDimensionSelect.value, 10),
+        isLossless: false,
+      };
+    }
+    return { quality: 0.85, maxDim: 0, isLossless: false };
+  }
+
+  // Target size limit is active (e.g. 7 MB)
+  const overhead = 30000 + totalPages * 600;
+  const usableBytes = Math.max(100000, targetMaxBytes - overhead);
+  const bytesPerPage = usableBytes / totalPages;
+
+  if (bytesPerPage >= 2500000) {
+    return { quality: 0.88, maxDim: 3840, isLossless: false };
+  } else if (bytesPerPage >= 1400000) {
+    return { quality: 0.84, maxDim: 2800, isLossless: false };
+  } else if (bytesPerPage >= 800000) {
+    return { quality: 0.78, maxDim: 2200, isLossless: false };
+  } else if (bytesPerPage >= 450000) {
+    return { quality: 0.72, maxDim: 1800, isLossless: false };
+  } else if (bytesPerPage >= 220000) {
+    return { quality: 0.62, maxDim: 1400, isLossless: false };
+  } else if (bytesPerPage >= 100000) {
+    return { quality: 0.52, maxDim: 1050, isLossless: false };
+  } else {
+    return { quality: 0.42, maxDim: 800, isLossless: false };
+  }
+}
+
 /**
- * Builds the PDF document from the current items and settings
+ * Builds the PDF document with given quality and dimension limits
  */
-async function buildPdfDocument(onProgress) {
+async function compilePdfWithParams(params, onProgress, passName = '') {
   const PDFLib = await ensurePdfLibLoaded();
   const { PDFDocument, rgb } = PDFLib;
   const pdfDoc = await PDFDocument.create();
@@ -635,54 +701,30 @@ async function buildPdfDocument(onProgress) {
 
   pdfDoc.setTitle(docTitle);
   pdfDoc.setAuthor(docAuthor);
-  pdfDoc.setCreator('IMAGEStoPDF (https://gaurav-budhwani.github.io/imagesTOpdf/)');
+  pdfDoc.setCreator('IMAGEStoPDF Studio');
 
   // Settings
-  const format = DOM.pageFormatSelect.value; // 'fit', 'a4', 'letter'
-  const orientation = DOM.pageOrientationSelect.value; // 'auto', 'portrait', 'landscape'
+  const format = DOM.pageFormatSelect.value;
+  const orientation = DOM.pageOrientationSelect.value;
   const marginPt = parseFloat(DOM.pageMarginSelect.value) || 0;
-  const compressionPreset = DOM.compressionSelect.value;
   const addPageNumbers = DOM.addPageNumbersCheckbox.checked;
 
   const totalPages = STATE.items.length;
+  const { quality, maxDim, isLossless } = params;
 
   for (let i = 0; i < totalPages; i++) {
     const item = STATE.items[i];
     if (onProgress) {
       const pct = Math.round(((i + 1) / totalPages) * 100);
-      onProgress(pct, `Processing page ${i + 1} of ${totalPages}...`);
+      onProgress(pct, `Processing page ${i + 1} of ${totalPages}${passName}...`);
     }
 
-    // Determine target quality and compression
-    let quality = 0.85;
-    let maxDim = 0;
-
-    if (compressionPreset === 'lossless') {
-      quality = 1.0;
-      maxDim = 0;
-    } else if (compressionPreset === 'high') {
-      quality = 0.85;
-      maxDim = 0;
-    } else if (compressionPreset === 'balanced') {
-      quality = 0.72;
-      maxDim = 2560;
-    } else if (compressionPreset === 'compact') {
-      quality = 0.55;
-      maxDim = 1800;
-    } else if (compressionPreset === 'custom') {
-      quality = parseInt(DOM.customQualitySlider.value, 10) / 100;
-      maxDim = parseInt(DOM.maxDimensionSelect.value, 10);
-    }
-
-    // Get image bytes
     let imageBytes;
     let isJpg = true;
 
     // Check if we can do true 100% bit-for-bit lossless pass-through:
-    // (Only when 0° rotation, original filter, no compression downsampling, and input is already JPG)
-    const canPassThrough = (item.rotation === 0) && 
+    const canPassThrough = isLossless && (item.rotation === 0) && 
                            (item.filter === 'original') && 
-                           (compressionPreset === 'lossless') && 
                            (item.type === 'image/jpeg' || item.type === 'image/jpg');
 
     if (canPassThrough) {
@@ -704,7 +746,7 @@ async function buildPdfDocument(onProgress) {
 
       const canvas = renderItemToCanvas(item, targetW, targetH, false);
 
-      if (compressionPreset === 'lossless' && item.type === 'image/png') {
+      if (isLossless && item.type === 'image/png') {
         const blob = await canvasToBlob(canvas, 'image/png');
         imageBytes = await blob.arrayBuffer();
         isJpg = false;
@@ -725,7 +767,6 @@ async function buildPdfDocument(onProgress) {
     let drawX, drawY, drawW, drawH;
 
     if (format === 'fit') {
-      // Page dimensions match the image aspect ratio plus margins
       pageWidth = imgW + 2 * marginPt;
       pageHeight = imgH + 2 * marginPt;
       drawX = marginPt;
@@ -733,7 +774,6 @@ async function buildPdfDocument(onProgress) {
       drawW = imgW;
       drawH = imgH;
     } else {
-      // Standard paper size (A4 / Letter)
       const baseSize = PAGE_SIZES[format];
       let isLandscape;
 
@@ -742,14 +782,12 @@ async function buildPdfDocument(onProgress) {
       } else if (orientation === 'landscape') {
         isLandscape = true;
       } else {
-        // Auto orientation based on image aspect ratio
         isLandscape = imgW > imgH;
       }
 
       pageWidth = isLandscape ? Math.max(baseSize.width, baseSize.height) : Math.min(baseSize.width, baseSize.height);
       pageHeight = isLandscape ? Math.min(baseSize.width, baseSize.height) : Math.max(baseSize.width, baseSize.height);
 
-      // Fit inside printable area
       const printableW = Math.max(10, pageWidth - 2 * marginPt);
       const printableH = Math.max(10, pageHeight - 2 * marginPt);
 
@@ -757,7 +795,6 @@ async function buildPdfDocument(onProgress) {
       drawW = imgW * scale;
       drawH = imgH * scale;
 
-      // Center the image inside the printable box
       drawX = marginPt + (printableW - drawW) / 2;
       drawY = marginPt + (printableH - drawH) / 2;
     }
@@ -771,7 +808,6 @@ async function buildPdfDocument(onProgress) {
       height: drawH,
     });
 
-    // Optional Page Numbers
     if (addPageNumbers) {
       const pageText = `${i + 1} / ${totalPages}`;
       page.drawText(pageText, {
@@ -783,7 +819,34 @@ async function buildPdfDocument(onProgress) {
     }
   }
 
-  const pdfBytes = await pdfDoc.save();
+  return await pdfDoc.save();
+}
+
+/**
+ * Builds the PDF document and guarantees it adheres to the target file size
+ */
+async function buildPdfDocument(onProgress) {
+  const targetMaxBytes = getTargetMaxBytes();
+  const totalPages = STATE.items.length;
+  let params = getInitialCompressionParams(totalPages, targetMaxBytes);
+
+  let pdfBytes = await compilePdfWithParams(params, onProgress);
+
+  // Adaptive Refinement: If resulting PDF still exceeds targetMaxBytes, perform fine-tuning pass
+  if (targetMaxBytes && pdfBytes.length > targetMaxBytes) {
+    const ratio = targetMaxBytes / pdfBytes.length;
+    if (onProgress) {
+      onProgress(88, `Optimizing size to stay under ${(targetMaxBytes / 1048576).toFixed(1)} MB...`);
+    }
+
+    params.quality = Math.max(0.35, Math.min(0.90, params.quality * Math.sqrt(ratio) * 0.93));
+    const currentDim = params.maxDim || 2400;
+    params.maxDim = Math.max(750, Math.round(currentDim * Math.sqrt(ratio) * 0.95));
+    params.isLossless = false;
+
+    pdfBytes = await compilePdfWithParams(params, onProgress, ' (fine-tuning)');
+  }
+
   return new Blob([pdfBytes], { type: 'application/pdf' });
 }
 
@@ -846,8 +909,11 @@ async function triggerPdfPreview() {
 
     const rawTitle = DOM.docTitleInput.value.trim() || 
       sanitizeDocName(STATE.items[0].name.replace(/\.[^/.]+$/, '')) || 'Document';
+    const targetMaxBytes = getTargetMaxBytes();
+    const sizeMb = (pdfBlob.size / (1024 * 1024)).toFixed(2);
+    const limitText = targetMaxBytes ? ` • Target: ≤ ${(targetMaxBytes / 1048576).toFixed(1)} MB` : '';
     DOM.previewModalTitle.textContent = `${rawTitle}.pdf`;
-    DOM.previewModalMeta.textContent = `${STATE.items.length} pages • ${(pdfBlob.size / 1024).toFixed(0)} KB`;
+    DOM.previewModalMeta.textContent = `${STATE.items.length} pages • ${sizeMb} MB${limitText}`;
 
     DOM.previewDialog.showModal();
   } catch (err) {
@@ -1057,6 +1123,42 @@ function setupEventListeners() {
     DOM.customQualityVal.textContent = `${DOM.customQualitySlider.value}%`;
   });
 
+  // Target Size Controls
+  if (DOM.targetSizeToggle) {
+    DOM.targetSizeToggle.addEventListener('change', () => {
+      const isEnabled = DOM.targetSizeToggle.checked;
+      DOM.targetSizeControls.classList.toggle('is-disabled', !isEnabled);
+      updatePresetChipsActive(isEnabled ? parseFloat(DOM.targetSizeInput.value) : 0);
+      updateUIState();
+    });
+  }
+
+  if (DOM.targetSizeInput) {
+    DOM.targetSizeInput.addEventListener('input', () => {
+      const val = parseFloat(DOM.targetSizeInput.value) || 0;
+      updatePresetChipsActive(val);
+      updateUIState();
+    });
+  }
+
+  if (DOM.targetPresetChips) {
+    DOM.targetPresetChips.addEventListener('click', (e) => {
+      const chip = e.target.closest('.preset-chip');
+      if (!chip) return;
+      const size = parseFloat(chip.dataset.size);
+      if (size === 0) {
+        DOM.targetSizeToggle.checked = false;
+        DOM.targetSizeControls.classList.add('is-disabled');
+      } else {
+        DOM.targetSizeToggle.checked = true;
+        DOM.targetSizeControls.classList.remove('is-disabled');
+        DOM.targetSizeInput.value = size;
+      }
+      updatePresetChipsActive(size);
+      updateUIState();
+    });
+  }
+
   // Action Bar Buttons
   DOM.generatePdfBtn.addEventListener('click', triggerPdfDownload);
   DOM.previewPdfBtn.addEventListener('click', triggerPdfPreview);
@@ -1093,6 +1195,14 @@ function applySorting(mode) {
 // ============================================================================
 // Utilities
 // ============================================================================
+
+function updatePresetChipsActive(activeSize) {
+  if (!DOM.targetPresetChips) return;
+  DOM.targetPresetChips.querySelectorAll('.preset-chip').forEach(btn => {
+    const s = parseFloat(btn.dataset.size);
+    btn.classList.toggle('active', Math.abs(s - activeSize) < 0.05);
+  });
+}
 
 function sanitizeDocName(name) {
   return (name || 'Document').replace(/[^a-zA-Z0-9_\-]/g, '_').substring(0, 50);
