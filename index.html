@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IMAGEStoPDF — High-Fidelity Image to PDF Studio</title>
+  <meta name="description" content="Fast, private, client-side images to PDF converter. Preserve maximum image quality, custom compression, page reordering, rotation, and document filters.">
+  <link rel="icon" type="image/svg+xml" href="./favicon.svg">
+  <link rel="stylesheet" href="./style.css">
+
+  <!-- PDF & Image Client-Side Libraries -->
+  <script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.9/dist/pdf-lib.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" defer></script>
+</head>
+<body>
+  <div class="app-shell">
+    <!-- Minimalist Header -->
+    <header class="app-header">
+      <div class="brand">
+        <span class="brand-glyph" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <circle cx="10" cy="13" r="1.5"></circle>
+            <path d="M7 19l4-4 3 3 2-2 4 4"></path>
+          </svg>
+        </span>
+        <div class="brand-text">
+          <span class="brand-title">IMAGEStoPDF</span>
+          <span class="brand-tag">Lossless Studio</span>
+        </div>
+      </div>
+
+      <div class="header-tools">
+        <div class="privacy-badge" title="All processing happens entirely in your browser. No files are uploaded to any server.">
+          <span class="pulse-dot"></span>
+          <span class="badge-text">100% In-Memory • Zero Uploads</span>
+        </div>
+
+        <button type="button" class="icon-button" id="themeToggle" aria-label="Toggle visual theme" title="Toggle theme">
+          <svg class="icon-sun" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="4"></circle>
+            <path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32l1.41 1.41M2 12h2m16 0h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"></path>
+          </svg>
+          <svg class="icon-moon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Workspace -->
+    <main class="workspace">
+      <!-- Settings Panel -->
+      <section class="settings-card" aria-label="PDF Document Settings">
+        <div class="settings-row">
+          <!-- Page Format -->
+          <div class="setting-item">
+            <label class="setting-label" for="pageFormatSelect">Page Size</label>
+            <select id="pageFormatSelect" class="minimal-select">
+              <option value="fit" selected>Fit Image (Original Aspect Ratio)</option>
+              <option value="a4">A4 (210 × 297 mm)</option>
+              <option value="letter">US Letter (8.5 × 11 in)</option>
+            </select>
+          </div>
+
+          <!-- Page Orientation -->
+          <div class="setting-item" id="orientationSettingGroup">
+            <label class="setting-label" for="pageOrientationSelect">Orientation</label>
+            <select id="pageOrientationSelect" class="minimal-select">
+              <option value="auto" selected>Auto (Per Image)</option>
+              <option value="portrait">Portrait</option>
+              <option value="landscape">Landscape</option>
+            </select>
+          </div>
+
+          <!-- Margins -->
+          <div class="setting-item" id="marginSettingGroup">
+            <label class="setting-label" for="pageMarginSelect">Margins</label>
+            <select id="pageMarginSelect" class="minimal-select">
+              <option value="0" selected>None (Edge to Edge)</option>
+              <option value="14">Small (5 mm)</option>
+              <option value="34">Standard (12 mm)</option>
+              <option value="56">Wide (20 mm)</option>
+            </select>
+          </div>
+
+          <!-- Compression Preset -->
+          <div class="setting-item">
+            <label class="setting-label" for="compressionSelect">Quality & Compression</label>
+            <select id="compressionSelect" class="minimal-select">
+              <option value="lossless" selected>Lossless / Original (100% Quality)</option>
+              <option value="high">High Quality (85% JPEG)</option>
+              <option value="balanced">Balanced (72% JPEG)</option>
+              <option value="compact">Compact / Small Size (55% JPEG)</option>
+              <option value="custom">Custom Quality & Resolution...</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Custom Compression Drawer (hidden by default) -->
+        <div class="custom-drawer" id="customDrawer" hidden>
+          <div class="drawer-grid">
+            <div class="control-subgroup">
+              <div class="label-with-value">
+                <span class="setting-sublabel">Image Quality</span>
+                <span class="control-value" id="customQualityVal">85%</span>
+              </div>
+              <input type="range" id="customQualitySlider" class="minimal-slider" min="30" max="100" value="85" step="1">
+            </div>
+
+            <div class="control-subgroup">
+              <label class="setting-sublabel" for="maxDimensionSelect">Max Resolution</label>
+              <select id="maxDimensionSelect" class="minimal-select select-compact">
+                <option value="0" selected>Original Full Resolution</option>
+                <option value="3840">Max 4K (3840px)</option>
+                <option value="2560">Max 2K (2560px)</option>
+                <option value="1920">Max 1080p (1920px)</option>
+                <option value="1200">Max Document Size (1200px)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Document Metadata & Extra Options (Collapsible) -->
+        <details class="more-options-details">
+          <summary class="more-options-summary">
+            <span>Document Details & Options</span>
+            <svg class="summary-arrow" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </summary>
+          <div class="more-options-content">
+            <div class="meta-row">
+              <div class="meta-field">
+                <label class="setting-sublabel" for="docTitleInput">Document Title</label>
+                <input type="text" id="docTitleInput" class="minimal-input" placeholder="e.g. Scanned_Document">
+              </div>
+              <div class="meta-field">
+                <label class="setting-sublabel" for="docAuthorInput">Author / Creator</label>
+                <input type="text" id="docAuthorInput" class="minimal-input" placeholder="e.g. Your Name">
+              </div>
+            </div>
+            <div class="checkbox-options">
+              <label class="checkbox-label">
+                <input type="checkbox" id="addPageNumbersCheckbox" class="minimal-checkbox">
+                <span>Add page numbers in footer (e.g. "1 of 5")</span>
+              </label>
+              <label class="checkbox-label">
+                <input type="checkbox" id="exportSeparateCheckbox" class="minimal-checkbox">
+                <span>Export each image as separate PDF (download as ZIP)</span>
+              </label>
+            </div>
+          </div>
+        </details>
+      </section>
+
+      <!-- Upload / Drop Zone -->
+      <section class="drop-zone-wrapper">
+        <div class="drop-zone" id="dropZone" tabindex="0" role="button" aria-label="Dropzone for images">
+          <input type="file" id="fileInput" multiple accept="image/*,.heic,.heif,.tiff,.tif,.dng,.svg,.bmp,.webp" class="sr-only">
+          
+          <div class="drop-prompt">
+            <div class="drop-icon">
+              <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="17 8 12 3 7 8"></polyline>
+                <line x1="12" y1="3" x2="12" y2="15"></line>
+              </svg>
+            </div>
+            <div class="drop-title">
+              <span class="action-accent">Click to choose images</span> or drag & drop here
+            </div>
+            <div class="drop-hint">
+              Supports JPG, PNG, WebP, HEIC/HEIF, TIFF, BMP, SVG • Reorder & rotate anytime • Paste with Cmd+V
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Workspace Area: Batch Bar & Grid (hidden when empty) -->
+      <section class="pages-section" id="pagesSection" hidden>
+        <!-- Batch Action Toolbar -->
+        <div class="batch-bar">
+          <div class="batch-left">
+            <span class="pages-count-badge" id="pagesCountBadge">0 Pages</span>
+            <span class="reorder-tip">Tip: Drag cards or use ← / → to reorder pages</span>
+          </div>
+
+          <div class="batch-right">
+            <!-- Global Filter Dropdown -->
+            <div class="dropdown-wrapper">
+              <button type="button" class="btn-subtle" id="applyFilterAllBtn" title="Apply filter to all images">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+                </svg>
+                <span>Filter All</span>
+              </button>
+              <div class="dropdown-menu" id="filterDropdownMenu" hidden>
+                <button type="button" class="dropdown-item" data-filter="original">Original (No Filter)</button>
+                <button type="button" class="dropdown-item" data-filter="bw">B&W / Grayscale</button>
+                <button type="button" class="dropdown-item" data-filter="scan">Document Scan (Crisp Paper)</button>
+                <button type="button" class="dropdown-item" data-filter="brighten">Brighten (+25%)</button>
+                <button type="button" class="dropdown-item" data-filter="sharpen">Sharpen & High Contrast</button>
+              </div>
+            </div>
+
+            <!-- Rotate All -->
+            <button type="button" class="btn-subtle" id="rotateAllBtn" title="Rotate all images 90° clockwise">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="23 4 23 10 17 10"></polyline>
+                <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+              </svg>
+              <span>Rotate All 90°</span>
+            </button>
+
+            <!-- Sort Menu -->
+            <div class="dropdown-wrapper">
+              <button type="button" class="btn-subtle" id="sortMenuBtn" title="Sort pages">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="18" y1="20" x2="18" y2="10"></line>
+                  <line x1="12" y1="20" x2="12" y2="4"></line>
+                  <line x1="6" y1="20" x2="6" y2="14"></line>
+                </svg>
+                <span>Sort</span>
+              </button>
+              <div class="dropdown-menu" id="sortDropdownMenu" hidden>
+                <button type="button" class="dropdown-item" data-sort="name-asc">Name (A → Z)</button>
+                <button type="button" class="dropdown-item" data-sort="name-desc">Name (Z → A)</button>
+                <button type="button" class="dropdown-item" data-sort="size-desc">Largest First</button>
+                <button type="button" class="dropdown-item" data-sort="reverse">Reverse Order</button>
+              </div>
+            </div>
+
+            <!-- Add More Button -->
+            <button type="button" class="btn-subtle" id="addMoreBtn" title="Add more images to document">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+              </svg>
+              <span>Add Images</span>
+            </button>
+
+            <!-- Clear All -->
+            <button type="button" class="btn-subtle text-danger" id="clearAllBtn" title="Remove all pages">
+              Clear
+            </button>
+          </div>
+        </div>
+
+        <!-- Cards Grid -->
+        <div class="pages-grid" id="pagesGrid" role="list" aria-label="PDF Pages Grid">
+          <!-- Page cards will be dynamically injected here -->
+        </div>
+      </section>
+    </main>
+
+    <!-- Sticky Floating Action Bar (visible when items are loaded) -->
+    <footer class="action-bar" id="actionBar" hidden>
+      <div class="action-info">
+        <span class="action-title" id="actionDocTitle">Document.pdf</span>
+        <span class="action-meta" id="actionDocMeta">0 pages • Ready</span>
+      </div>
+
+      <div class="action-buttons">
+        <button type="button" class="btn-secondary" id="previewPdfBtn">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+            <circle cx="12" cy="12" r="3"></circle>
+          </svg>
+          <span>Preview PDF</span>
+        </button>
+
+        <button type="button" class="btn-primary" id="generatePdfBtn">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="7 10 12 15 17 10"></polyline>
+            <line x1="12" y1="15" x2="12" y2="3"></line>
+          </svg>
+          <span id="generateBtnText">Download PDF</span>
+        </button>
+      </div>
+    </footer>
+  </div>
+
+  <!-- PDF Preview Dialog -->
+  <dialog class="modal-dialog" id="previewDialog">
+    <div class="modal-shell">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <h3 class="modal-title" id="previewModalTitle">PDF Preview</h3>
+          <span class="modal-meta" id="previewModalMeta">Generated in memory</span>
+        </div>
+        <div class="modal-header-actions">
+          <button type="button" class="btn-primary btn-sm" id="modalDownloadBtn">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="7 10 12 15 17 10"></polyline>
+              <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+            <span>Download</span>
+          </button>
+          <button type="button" class="icon-button modal-close" id="closePreviewBtn" aria-label="Close Preview">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+      </div>
+      <div class="modal-body" id="previewModalBody">
+        <iframe id="pdfPreviewIframe" class="pdf-preview-frame" title="PDF Live Preview"></iframe>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- Processing Overlay Dialog -->
+  <dialog class="modal-dialog modal-processing" id="processingDialog">
+    <div class="processing-content">
+      <div class="spinner-ring" aria-hidden="true"></div>
+      <h3 class="processing-title" id="processingTitle">Building PDF...</h3>
+      <p class="processing-subtitle" id="processingSubtitle">Rendering pages & applying filters</p>
+      <div class="progress-track">
+        <div class="progress-bar" id="progressBar" style="width: 0%"></div>
+      </div>
+      <span class="progress-percent" id="progressPercent">0%</span>
+    </div>
+  </dialog>
+
+  <script src="./app.js" type="module"></script>
+</body>
+</html>
