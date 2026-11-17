@@ -48,13 +48,12 @@ const DOM = {
   exportSeparateCheckbox: document.getElementById('exportSeparateCheckbox'),
 
   // Batch actions
-  applyFilterAllBtn: document.getElementById('applyFilterAllBtn'),
-  filterDropdownMenu: document.getElementById('filterDropdownMenu'),
+  filterAllSelect: document.getElementById('filterAllSelect'),
+  sortSelect: document.getElementById('sortSelect'),
   rotateAllBtn: document.getElementById('rotateAllBtn'),
-  sortMenuBtn: document.getElementById('sortMenuBtn'),
-  sortDropdownMenu: document.getElementById('sortDropdownMenu'),
   addMoreBtn: document.getElementById('addMoreBtn'),
   clearAllBtn: document.getElementById('clearAllBtn'),
+  topDownloadBtn: document.getElementById('topDownloadBtn'),
 
   // Bottom action buttons
   previewPdfBtn: document.getElementById('previewPdfBtn'),
@@ -1013,42 +1012,33 @@ function setupEventListeners() {
     renderPagesGrid();
   });
 
-  // Filter dropdown
-  DOM.applyFilterAllBtn.addEventListener('click', (e) => {
-    e.stopPropagation();
-    DOM.filterDropdownMenu.hidden = !DOM.filterDropdownMenu.hidden;
-    DOM.sortDropdownMenu.hidden = true;
-  });
+  // Inline Batch Filter Select
+  if (DOM.filterAllSelect) {
+    DOM.filterAllSelect.addEventListener('change', (e) => {
+      const filter = e.target.value;
+      if (!filter) return;
+      STATE.items.forEach(it => { it.filter = filter; });
+      renderPagesGrid();
+      // Reset select to default label
+      DOM.filterAllSelect.selectedIndex = 0;
+    });
+  }
 
-  DOM.filterDropdownMenu.addEventListener('click', (e) => {
-    const btn = e.target.closest('[data-filter]');
-    if (!btn) return;
-    const filter = btn.dataset.filter;
-    STATE.items.forEach(it => { it.filter = filter; });
-    DOM.filterDropdownMenu.hidden = true;
-    renderPagesGrid();
-  });
+  // Inline Batch Sort Select
+  if (DOM.sortSelect) {
+    DOM.sortSelect.addEventListener('change', (e) => {
+      const sort = e.target.value;
+      if (!sort) return;
+      applySorting(sort);
+      // Reset select to default label
+      DOM.sortSelect.selectedIndex = 0;
+    });
+  }
 
-  // Sort dropdown
-  DOM.sortMenuBtn.addEventListener('click', (e) => {
-    e.stopPropagation();
-    DOM.sortDropdownMenu.hidden = !DOM.sortDropdownMenu.hidden;
-    DOM.filterDropdownMenu.hidden = true;
-  });
-
-  DOM.sortDropdownMenu.addEventListener('click', (e) => {
-    const btn = e.target.closest('[data-sort]');
-    if (!btn) return;
-    const sort = btn.dataset.sort;
-    applySorting(sort);
-    DOM.sortDropdownMenu.hidden = true;
-  });
-
-  // Close dropdowns on outside click
-  document.addEventListener('click', () => {
-    DOM.filterDropdownMenu.hidden = true;
-    DOM.sortDropdownMenu.hidden = true;
-  });
+  // Top Download PDF Button
+  if (DOM.topDownloadBtn) {
+    DOM.topDownloadBtn.addEventListener('click', triggerPdfDownload);
+  }
 
   // Settings: Page format change
   DOM.pageFormatSelect.addEventListener('change', () => {

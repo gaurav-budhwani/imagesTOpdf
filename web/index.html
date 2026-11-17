@@ -189,26 +189,28 @@
         <div class="batch-bar">
           <div class="batch-left">
             <span class="pages-count-badge" id="pagesCountBadge">0 Pages</span>
-            <span class="reorder-tip">Tip: Drag cards or use ← / → to reorder pages</span>
+            <span class="reorder-tip">Drag cards or use ← / → to reorder</span>
           </div>
 
           <div class="batch-right">
-            <!-- Global Filter Dropdown -->
-            <div class="dropdown-wrapper">
-              <button type="button" class="btn-subtle" id="applyFilterAllBtn" title="Apply filter to all images">
-                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
-                </svg>
-                <span>Filter All</span>
-              </button>
-              <div class="dropdown-menu" id="filterDropdownMenu" hidden>
-                <button type="button" class="dropdown-item" data-filter="original">Original (No Filter)</button>
-                <button type="button" class="dropdown-item" data-filter="bw">B&W / Grayscale</button>
-                <button type="button" class="dropdown-item" data-filter="scan">Document Scan (Crisp Paper)</button>
-                <button type="button" class="dropdown-item" data-filter="brighten">Brighten (+25%)</button>
-                <button type="button" class="dropdown-item" data-filter="sharpen">Sharpen & High Contrast</button>
-              </div>
-            </div>
+            <!-- Inline Filter All Select (No floating popovers) -->
+            <select id="filterAllSelect" class="toolbar-select" title="Apply filter to all pages">
+              <option value="" selected disabled>Filter All Pages...</option>
+              <option value="original">Original (No Filter)</option>
+              <option value="bw">B&amp;W / Grayscale</option>
+              <option value="scan">Document Scan (Crisp Paper)</option>
+              <option value="brighten">Brighten (+25%)</option>
+              <option value="sharpen">Sharpen &amp; High Contrast</option>
+            </select>
+
+            <!-- Inline Sort By Select (No floating popovers) -->
+            <select id="sortSelect" class="toolbar-select" title="Sort pages">
+              <option value="" selected disabled>Sort Pages...</option>
+              <option value="name-asc">Name (A → Z)</option>
+              <option value="name-desc">Name (Z → A)</option>
+              <option value="size-desc">Largest First</option>
+              <option value="reverse">Reverse Order</option>
+            </select>
 
             <!-- Rotate All -->
             <button type="button" class="btn-subtle" id="rotateAllBtn" title="Rotate all images 90° clockwise">
@@ -216,26 +218,8 @@
                 <polyline points="23 4 23 10 17 10"></polyline>
                 <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
               </svg>
-              <span>Rotate All 90°</span>
+              <span>Rotate All</span>
             </button>
-
-            <!-- Sort Menu -->
-            <div class="dropdown-wrapper">
-              <button type="button" class="btn-subtle" id="sortMenuBtn" title="Sort pages">
-                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <line x1="18" y1="20" x2="18" y2="10"></line>
-                  <line x1="12" y1="20" x2="12" y2="4"></line>
-                  <line x1="6" y1="20" x2="6" y2="14"></line>
-                </svg>
-                <span>Sort</span>
-              </button>
-              <div class="dropdown-menu" id="sortDropdownMenu" hidden>
-                <button type="button" class="dropdown-item" data-sort="name-asc">Name (A → Z)</button>
-                <button type="button" class="dropdown-item" data-sort="name-desc">Name (Z → A)</button>
-                <button type="button" class="dropdown-item" data-sort="size-desc">Largest First</button>
-                <button type="button" class="dropdown-item" data-sort="reverse">Reverse Order</button>
-              </div>
-            </div>
 
             <!-- Add More Button -->
             <button type="button" class="btn-subtle" id="addMoreBtn" title="Add more images to document">
@@ -244,6 +228,16 @@
                 <line x1="5" y1="12" x2="19" y2="12"></line>
               </svg>
               <span>Add Images</span>
+            </button>
+
+            <!-- Quick Download Top Button -->
+            <button type="button" class="btn-primary btn-sm" id="topDownloadBtn" title="Download PDF">
+              <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+              </svg>
+              <span>Download PDF</span>
             </button>
 
             <!-- Clear All -->
