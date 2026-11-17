@@ -18,3 +18,4 @@ PORT=5174
 
 echo "🚀 Starting IMAGEStoPDF Studio..."
 exec python3 app.py "$PORT"
+

@@ -545,6 +545,79 @@ function refreshCardThumbnail(card, item) {
 }
 
 // ============================================================================
+// PDF & ZIP Library Loaders (Offline-First + Multi-CDN Resilience)
+// ============================================================================
+
+async function ensurePdfLibLoaded() {
+  if (window.PDFLib) return window.PDFLib;
+
+  // 1. Wait briefly if local script tag is loading
+  for (let i = 0; i < 15; i++) {
+    if (window.PDFLib) return window.PDFLib;
+    await new Promise((r) => setTimeout(r, 80));
+  }
+
+  // 2. Fallback to local vendor script if not yet loaded
+  try {
+    await loadScript('./vendor/pdf-lib.min.js');
+    if (window.PDFLib) return window.PDFLib;
+  } catch (e) {
+    console.warn('Local vendor/pdf-lib.min.js not reachable, falling back to CDNs...');
+  }
+
+  // 3. Fallback to cdnjs
+  try {
+    await loadScript('https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.9/pdf-lib.min.js');
+    if (window.PDFLib) return window.PDFLib;
+  } catch (e) {}
+
+  // 4. Fallback to unpkg
+  try {
+    await loadScript('https://unpkg.com/pdf-lib@1.17.9/dist/pdf-lib.min.js');
+    if (window.PDFLib) return window.PDFLib;
+  } catch (e) {}
+
+  // 5. Fallback to jsdelivr
+  try {
+    await loadScript('https://cdn.jsdelivr.net/npm/pdf-lib@1.17.9/dist/pdf-lib.min.js');
+    if (window.PDFLib) return window.PDFLib;
+  } catch (e) {}
+
+  throw new Error('PDF-Lib could not be loaded. Please ensure ./vendor/pdf-lib.min.js is present or check your internet connection.');
+}
+
+async function ensureJsZipLoaded() {
+  if (window.JSZip) return window.JSZip;
+
+  for (let i = 0; i < 10; i++) {
+    if (window.JSZip) return window.JSZip;
+    await new Promise((r) => setTimeout(r, 60));
+  }
+
+  try {
+    await loadScript('./vendor/jszip.min.js');
+    if (window.JSZip) return window.JSZip;
+  } catch (e) {}
+
+  try {
+    await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js');
+    if (window.JSZip) return window.JSZip;
+  } catch (e) {}
+
+  return window.JSZip;
+}
+
+function loadScript(src) {
+  return new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = src;
+    s.onload = () => resolve();
+    s.onerror = (e) => reject(e);
+    document.head.appendChild(s);
+  });
+}
+
+// ============================================================================
 // PDF Generation Engine (using pdf-lib)
 // ============================================================================
 
@@ -552,11 +625,8 @@ function refreshCardThumbnail(card, item) {
  * Builds the PDF document from the current items and settings
  */
 async function buildPdfDocument(onProgress) {
-  if (!window.PDFLib) {
-    throw new Error('PDF-Lib is still loading. Please check internet connection or retry in a moment.');
-  }
-
-  const { PDFDocument, rgb } = window.PDFLib;
+  const PDFLib = await ensurePdfLibLoaded();
+  const { PDFDocument, rgb } = PDFLib;
   const pdfDoc = await PDFDocument.create();
 
   // Document Metadata
@@ -791,7 +861,11 @@ async function triggerPdfPreview() {
 }
 
 async function exportSeparatePdfsAsZip() {
-  const zip = new window.JSZip();
+  const JSZip = await ensureJsZipLoaded();
+  if (!JSZip) {
+    throw new Error('JSZip library could not be loaded.');
+  }
+  const zip = new JSZip();
   const total = STATE.items.length;
 
   for (let i = 0; i < total; i++) {
@@ -810,7 +884,8 @@ async function exportSeparatePdfsAsZip() {
 }
 
 async function buildSinglePdfFromItem(item, pageNumber) {
-  const { PDFDocument } = window.PDFLib;
+  const PDFLib = await ensurePdfLibLoaded();
+  const { PDFDocument } = PDFLib;
   const doc = await PDFDocument.create();
 
   const canvas = renderItemToCanvas(item, null, null, false);
@@ -1050,3 +1125,4 @@ document.addEventListener('DOMContentLoaded', () => {
   setupEventListeners();
   updateUIState();
 });
+

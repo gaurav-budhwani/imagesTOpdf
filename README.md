@@ -80,3 +80,4 @@ imagesTOpdf/
 ## 📄 License
 
 MIT License. Free and open source for personal and commercial use.
+

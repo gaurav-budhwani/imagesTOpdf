@@ -15,3 +15,4 @@ fi
 
 echo "🚀 Starting IMAGEStoPDF Studio on port ${PORT}..."
 exec python3 app.py "$PORT"
+
