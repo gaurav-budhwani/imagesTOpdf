@@ -101,7 +101,7 @@ body {
 .app-shell {
   max-width: 1080px;
   margin: 0 auto;
-  padding: 32px 24px 120px;
+  padding: 32px 24px 60px;
   display: flex;
   flex-direction: column;
   gap: 24px;
@@ -569,42 +569,29 @@ body {
   border-color: var(--accent-danger);
 }
 
-/* Dropdown menu */
-.dropdown-wrapper {
-  position: relative;
-}
-
-.dropdown-menu {
-  position: absolute;
-  top: calc(100% + 4px);
-  right: 0;
-  background-color: var(--bg-surface-elevated);
-  border: 1px solid var(--border-hover);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-md);
-  min-width: 190px;
-  padding: 4px;
-  z-index: 50;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.dropdown-item {
-  width: 100%;
-  text-align: left;
-  padding: 8px 12px;
-  font-size: 0.8rem;
-  color: var(--text-secondary);
-  background: transparent;
-  border: none;
+.toolbar-select {
+  height: 30px;
+  padding: 0 10px;
+  background: var(--bg-surface-elevated);
+  border: 1px solid var(--border-subtle);
   border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
+  font-weight: 500;
+  outline: none;
   cursor: pointer;
   transition: all var(--transition-fast);
 }
 
-.dropdown-item:hover {
-  background-color: var(--bg-muted);
+.toolbar-select:hover {
+  background: var(--bg-muted);
+  border-color: var(--border-hover);
+  color: var(--text-primary);
+}
+
+.toolbar-select:focus {
+  border-color: var(--border-active);
   color: var(--text-primary);
 }
 
@@ -824,31 +811,25 @@ body {
   color: var(--text-primary);
 }
 
-/* Sticky Action Bar */
+/* Document Summary & Download Footer (Docked in natural flow, never covers images) */
 .action-bar {
-  position: fixed;
-  bottom: 24px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: calc(100% - 48px);
-  max-width: 860px;
-  background: rgba(18, 18, 21, 0.85);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid var(--border-hover);
+  position: static;
+  margin-top: 24px;
+  width: 100%;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
   border-radius: var(--radius-lg);
-  padding: 12px 20px;
+  padding: 16px 20px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  box-shadow: var(--shadow-float);
-  z-index: 100;
+  box-shadow: var(--shadow-sm);
   transition: all var(--transition-normal);
 }
 
 [data-theme="light"] .action-bar {
-  background: rgba(255, 255, 255, 0.9);
-  border-color: rgba(0, 0, 0, 0.12);
+  background: var(--bg-surface);
+  border-color: var(--border-subtle);
 }
 
 .action-info {
