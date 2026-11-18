@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-app.py - Lightweight local development and desktop server for IMAGEStoPDF Studio.
+app.py - Local development server for imagesTOpdf.
 Runs natively on macOS and Linux with zero external dependencies.
 """
 
@@ -44,12 +44,11 @@ class ThreadedHTTPServer(ThreadingMixIn, HTTPServer):
     allow_reuse_address = True
 
 
-class StudioRequestHandler(SimpleHTTPRequestHandler):
+class AppRequestHandler(SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=WEB_DIR, **kwargs)
 
     def end_headers(self):
-        # Enable CORS and disable aggressive caching for local dev
         self.send_header("Access-Control-Allow-Origin", "*")
         self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
         self.send_header("Access-Control-Allow-Headers", "Content-Type")
@@ -61,7 +60,6 @@ class StudioRequestHandler(SimpleHTTPRequestHandler):
         self.end_headers()
 
     def log_message(self, format, *args):
-        # Clean terminal output
         sys.stderr.write(f"[{self.log_date_time_string()}] {format % args}\n")
 
 
@@ -85,15 +83,14 @@ def main():
         port = find_available_port(DEFAULT_PORT)
 
     server_address = ("127.0.0.1", port)
-    httpd = ThreadedHTTPServer(server_address, StudioRequestHandler)
+    httpd = ThreadedHTTPServer(server_address, AppRequestHandler)
 
     url = f"http://localhost:{port}"
-    print("=" * 64)
-    print("  📄 IMAGEStoPDF — High-Fidelity Lossless Studio")
-    print(f"  🌐 Running locally at: {url}")
-    print("  🔒 100% Client-Side In-Memory • Zero External Uploads")
-    print("  🛑 Press Ctrl+C to stop server")
-    print("=" * 64)
+    print("=" * 48)
+    print("  imagesTOpdf")
+    print(f"  Running locally at: {url}")
+    print("  Press Ctrl+C to stop server")
+    print("=" * 48)
 
     # Launch browser in background thread
     threading.Thread(target=open_browser, args=(url,), daemon=True).start()
@@ -101,11 +98,10 @@ def main():
     try:
         httpd.serve_forever()
     except KeyboardInterrupt:
-        print("\n👋 Stopping server...")
+        print("\nStopping server...")
     finally:
         httpd.server_close()
 
 
 if __name__ == "__main__":
     main()
-

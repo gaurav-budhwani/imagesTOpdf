@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>IMAGEStoPDF — High-Fidelity Image to PDF Studio</title>
-  <meta name="description" content="Fast, private, client-side images to PDF converter. Preserve maximum image quality, custom compression, page reordering, rotation, and document filters.">
+  <title>imagesTOpdf</title>
+  <meta name="description" content="Convert images to PDF directly in the browser. Reorder, rotate, apply filters, and set file size limits.">
   <link rel="icon" type="image/svg+xml" href="./favicon.svg">
   <link rel="stylesheet" href="./style.css">
 
-  <!-- PDF & Image Client-Side Libraries (Local Offline-First with Multi-CDN Fallbacks) -->
+  <!-- Libraries -->
   <script src="./vendor/pdf-lib.min.js"></script>
   <script src="./vendor/jszip.min.js" defer></script>
   <script>
@@ -19,7 +19,7 @@
 </head>
 <body>
   <div class="app-shell">
-    <!-- Minimalist Header -->
+    <!-- Header -->
     <header class="app-header">
       <div class="brand">
         <span class="brand-glyph" aria-hidden="true">
@@ -31,15 +31,14 @@
           </svg>
         </span>
         <div class="brand-text">
-          <span class="brand-title">IMAGEStoPDF</span>
-          <span class="brand-tag">Lossless Studio</span>
+          <span class="brand-title">imagesTOpdf</span>
         </div>
       </div>
 
       <div class="header-tools">
-        <div class="privacy-badge" title="All processing happens entirely in your browser. No files are uploaded to any server.">
+        <div class="privacy-badge" title="All processing happens in your browser. No files are uploaded to a server.">
           <span class="pulse-dot"></span>
-          <span class="badge-text">100% In-Memory • Zero Uploads</span>
+          <span class="badge-text">Client-Side Processing</span>
         </div>
 
         <button type="button" class="icon-button" id="themeToggle" aria-label="Toggle visual theme" title="Toggle theme">
@@ -95,16 +94,16 @@
             <label class="setting-label" for="compressionSelect">Quality Preset</label>
             <select id="compressionSelect" class="minimal-select">
               <option value="auto" selected>Auto Optimize for Target Size</option>
-              <option value="lossless">Lossless / Original (100% Quality)</option>
+              <option value="lossless">Original (100% Quality)</option>
               <option value="high">High Quality (85% JPEG)</option>
               <option value="balanced">Balanced (72% JPEG)</option>
-              <option value="compact">Compact / Small Size (55% JPEG)</option>
+              <option value="compact">Compact (55% JPEG)</option>
               <option value="custom">Custom Quality &amp; Resolution...</option>
             </select>
           </div>
         </div>
 
-        <!-- Target File Size Control (Keeps PDF strictly under specified MB, ≤ 7 MB by default) -->
+        <!-- Target File Size Control -->
         <div class="target-size-bar" id="targetSizeBar">
           <div class="target-size-header">
             <div class="target-title-group">
@@ -112,8 +111,8 @@
                 <circle cx="12" cy="12" r="10"></circle>
                 <line x1="8" y1="12" x2="16" y2="12"></line>
               </svg>
-              <span class="target-title">Target File Size Limit</span>
-              <span class="target-hint">Guarantees output stays under limit (ideal for job &amp; gov portals)</span>
+              <span class="target-title">Target File Size</span>
+              <span class="target-hint">Keeps output below your selected size limit</span>
             </div>
             <label class="toggle-switch-label">
               <input type="checkbox" id="targetSizeToggle" class="minimal-checkbox" checked>
@@ -210,10 +209,10 @@
               </svg>
             </div>
             <div class="drop-title">
-              <span class="action-accent">Click to choose images</span> or drag & drop here
+              <span class="action-accent">Choose images</span> or drag and drop here
             </div>
             <div class="drop-hint">
-              Supports JPG, PNG, WebP, HEIC/HEIF, TIFF, BMP, SVG • Reorder & rotate anytime • Paste with Cmd+V
+              Supports JPG, PNG, WebP, HEIC, TIFF, BMP, and SVG • Paste with Cmd+V
             </div>
           </div>
         </div>
@@ -324,7 +323,7 @@
       <div class="modal-header">
         <div class="modal-title-group">
           <h3 class="modal-title" id="previewModalTitle">PDF Preview</h3>
-          <span class="modal-meta" id="previewModalMeta">Generated in memory</span>
+          <span class="modal-meta" id="previewModalMeta">Ready</span>
         </div>
         <div class="modal-header-actions">
           <button type="button" class="btn-primary btn-sm" id="modalDownloadBtn">

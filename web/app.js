@@ -1,6 +1,5 @@
 /**
- * IMAGEStoPDF — High-Fidelity Client-Side PDF Studio
- * 100% In-Memory Processing, Lossless Quality, Reordering, Rotation & Filters
+ * imagesTOpdf - Image to PDF converter
  */
 
 // ============================================================================
@@ -697,11 +696,11 @@ async function compilePdfWithParams(params, onProgress, passName = '') {
   // Document Metadata
   const docTitle = DOM.docTitleInput.value.trim() || 
     (STATE.items[0] ? sanitizeDocName(STATE.items[0].name.replace(/\.[^/.]+$/, '')) : 'Document');
-  const docAuthor = DOM.docAuthorInput.value.trim() || 'IMAGEStoPDF Studio';
+  const docAuthor = DOM.docAuthorInput.value.trim() || 'imagesTOpdf';
 
   pdfDoc.setTitle(docTitle);
   pdfDoc.setAuthor(docAuthor);
-  pdfDoc.setCreator('IMAGEStoPDF Studio');
+  pdfDoc.setCreator('imagesTOpdf');
 
   // Settings
   const format = DOM.pageFormatSelect.value;
