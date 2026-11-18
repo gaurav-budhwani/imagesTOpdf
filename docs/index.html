@@ -92,14 +92,50 @@
 
           <!-- Compression Preset -->
           <div class="setting-item">
-            <label class="setting-label" for="compressionSelect">Quality & Compression</label>
+            <label class="setting-label" for="compressionSelect">Quality Preset</label>
             <select id="compressionSelect" class="minimal-select">
-              <option value="lossless" selected>Lossless / Original (100% Quality)</option>
+              <option value="auto" selected>Auto Optimize for Target Size</option>
+              <option value="lossless">Lossless / Original (100% Quality)</option>
               <option value="high">High Quality (85% JPEG)</option>
               <option value="balanced">Balanced (72% JPEG)</option>
               <option value="compact">Compact / Small Size (55% JPEG)</option>
-              <option value="custom">Custom Quality & Resolution...</option>
+              <option value="custom">Custom Quality &amp; Resolution...</option>
             </select>
+          </div>
+        </div>
+
+        <!-- Target File Size Control (Keeps PDF strictly under specified MB, ≤ 7 MB by default) -->
+        <div class="target-size-bar" id="targetSizeBar">
+          <div class="target-size-header">
+            <div class="target-title-group">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="8" y1="12" x2="16" y2="12"></line>
+              </svg>
+              <span class="target-title">Target File Size Limit</span>
+              <span class="target-hint">Guarantees output stays under limit (ideal for job &amp; gov portals)</span>
+            </div>
+            <label class="toggle-switch-label">
+              <input type="checkbox" id="targetSizeToggle" class="minimal-checkbox" checked>
+              <span>Limit Max Size</span>
+            </label>
+          </div>
+
+          <div class="target-size-controls" id="targetSizeControls">
+            <div class="target-input-box">
+              <span class="target-input-prefix">Max Size:</span>
+              <input type="number" id="targetSizeInput" class="minimal-input target-num-input" min="0.2" max="100" step="0.5" value="7">
+              <span class="target-input-suffix">MB</span>
+            </div>
+
+            <div class="target-preset-chips" id="targetPresetChips">
+              <button type="button" class="preset-chip" data-size="2">≤ 2 MB</button>
+              <button type="button" class="preset-chip" data-size="5">≤ 5 MB</button>
+              <button type="button" class="preset-chip active" data-size="7">≤ 7 MB (Standard)</button>
+              <button type="button" class="preset-chip" data-size="10">≤ 10 MB</button>
+              <button type="button" class="preset-chip" data-size="15">≤ 15 MB</button>
+              <button type="button" class="preset-chip" data-size="0">No Limit</button>
+            </div>
           </div>
         </div>
 
