@@ -1,83 +1,60 @@
-# IMAGEStoPDF — High-Fidelity Image to PDF Studio
+# imagesTOpdf
 
-A minimal, lightning-fast, and 100% private in-browser tool to assemble, rotate, filter, and convert multiple images into pristine PDF documents.
+A web tool to convert images into a PDF document directly in the browser.
 
-Designed to match the aesthetic and engineering precision of **HEICto-**.
+## Features
 
----
+- **Quality Preservation**: Keeps original image resolution and quality without forced downscaling.
+- **Target File Size Limit**: Option to limit the output PDF size (default is 7 MB, with presets for 2 MB, 5 MB, 10 MB, or custom values).
+- **Page Ordering**: Drag and drop cards or use arrow buttons to arrange pages in any sequence.
+- **Rotation**: Rotate individual images by 90, 180, 270, or 360 degrees, or rotate all pages at once.
+- **Document Filters**: Apply filters such as Original, Black and White, Document Scan (brightens paper background and darkens text), Brighten, and High Contrast.
+- **Page Layout**: Choose between Fit to Image (matches original aspect ratio), A4, or US Letter, with customizable margins and orientation.
+- **Preview**: View the generated PDF inside the browser before downloading.
+- **Supported Formats**: Accepts JPG, PNG, WebP, HEIC, TIFF, BMP, and SVG files, as well as pasted images from the clipboard.
+- **Client-Side Processing**: Runs locally in the browser without uploading files to an external server.
 
-## ⚡ Highlights
+## Local Usage
 
-- **Lossless Fidelity**: Preserves maximum original image quality and native resolutions without forced lossy re-encoding or artifacts.
-- **Configurable Compression**: Choose from *Lossless (100%)*, *High Quality (85%)*, *Balanced (72%)*, *Compact (55%)*, or custom slider + resolution limiters.
-- **Interactive Page Management**:
-  - **Drag-and-Drop Reordering**: Smoothly drag cards to adjust page order before compiling.
-  - **Precision Arrow Controls**: Move Left (←) / Move Right (→) for touch and keyboard accessibility.
-  - **4-Way Rotation**: Rotate any individual page by 90°, 180°, 270°, or 360° with real-time thumbnail updates.
-  - **Batch Tools**: Rotate all pages, apply filters to all pages, or sort alphabetically / by file size.
-- **Document Filters**:
-  - **Original**: Natural color and dynamic range.
-  - **B&W / Grayscale**: Clean monochrome conversion for black & white printing.
-  - **Document Scan (Crisp Paper)**: Adaptive contrast curve that brightens shadowed/yellowed paper backgrounds to crisp white and deepens text ink.
-  - **Brighten (+25%)**: Exposure boost for dimly lit smartphone photos.
-  - **Sharpen & High Contrast**: Enhances fine text edges and handwriting legibility.
-- **Flexible Page Geometry**:
-  - **Fit Image**: Creates pages sized to each image's native aspect ratio with zero blank borders.
-  - **Standard Paper**: A4 and US Letter with Auto / Portrait / Landscape orientation.
-  - **Configurable Margins**: None (0 mm), Small (5 mm), Standard (12 mm), or Wide (20 mm).
-- **Live PDF Preview**: Inspect the fully compiled PDF directly in an in-memory browser viewer before downloading.
-- **100% Client-Side & Private**: All image decoding, canvas manipulation, and PDF compilation run entirely inside your browser's RAM via `pdf-lib`. No files are ever uploaded to any cloud server.
-- **Multi-Format Ingestion**: Supports JPG, PNG, WebP, HEIC/HEIF (iPhone photos), TIFF, BMP, SVG, and clipboard screenshot pasting (`Cmd+V` / `Ctrl+V`).
+### macOS
+Double-click `start.command` in Finder to launch the local server and open the tool in your browser (`http://localhost:5174`).
 
----
-
-## 🚀 Quick Start (Local Desktop)
-
-### macOS (Finder 1-Click)
-Double-click **`start.command`** in macOS Finder. It starts the local server and automatically opens your default browser at `http://localhost:5174`.
-
-### Terminal (macOS / Linux)
+### Terminal
 ```bash
 ./start.sh
-# Or directly with Python 3:
+```
+Or run directly with Python:
+```bash
 python3 app.py
 ```
 
----
+## Deployment
 
-## 🌐 Web Deployment (GitHub Pages)
+The tool runs as a static site and can be hosted on GitHub Pages:
 
-This project has zero server dependencies. You can host it on GitHub Pages in two simple ways:
+1. In repository settings, navigate to **Pages**.
+2. Under **Build and deployment**, select **Deploy from a branch**.
+3. Choose the `gh-pages` branch and `/ (root)` folder (or `main` branch and `/docs` folder).
+4. Save the configuration.
 
-1. **Deploy from `/docs` folder**:
-   In your GitHub repository settings under **Pages**, set **Source** to `Deploy from a branch`, select `main`, and choose folder `/docs`.
-2. **Deploy to `gh-pages` branch**:
-   Point GitHub Pages to the `web/` directory or root of a `gh-pages` branch.
-
-Your tool will be live at `https://<your-username>.github.io/<repo-name>/`.
-
----
-
-## 📁 Project Structure
+## Project Structure
 
 ```
 imagesTOpdf/
-├── app.py              # Lightweight local Python HTTP server (zero external pip packages)
-├── start.command       # Double-clickable macOS Finder launcher
-├── start.sh            # Terminal startup script
+├── app.py              # Local Python server
+├── start.command       # macOS Finder launcher
+├── start.sh            # Shell launcher
 ├── README.md           # Documentation
-├── web/                # Complete client-side web application
-│   ├── index.html      # Semantic HTML5 UI
-│   ├── style.css       # Dark/Light zinc design system
-│   ├── app.js          # In-browser PDF generation engine (pdf-lib, canvas filters, drag-and-drop)
-│   ├── favicon.svg     # Vector icon
-│   └── .nojekyll       # GitHub Pages compatibility flag
-└── docs/               # Direct mirror of web/ for GitHub Pages static hosting
+├── web/                # Web application files
+│   ├── index.html      # User interface
+│   ├── style.css       # Styles
+│   ├── app.js          # Application logic
+│   ├── favicon.svg     # Icon
+│   ├── .nojekyll       # GitHub Pages configuration
+│   └── vendor/         # Bundled offline libraries
+└── docs/               # Static mirror for GitHub Pages
 ```
 
----
+## License
 
-## 📄 License
-
-MIT License. Free and open source for personal and commercial use.
-
+MIT License.
